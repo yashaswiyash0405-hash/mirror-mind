@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mirror Mind – your digital twin and personal assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--paper:#000;--card:#0D0F0F;--ink:#F2F5F5;--muted:#A3AEAE;--line:#262C2C;--accent:#4FD1C5;--accent-ink:#000;--warn:#F2A65A;--aura:#4FD1C5;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#000}}
+:root[data-theme="dark"]{--paper:#000}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.6 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque","Instrument Sans",system-ui,sans-serif;line-height:1.05;margin:0;letter-spacing:-.02em}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.top{display:flex;justify-content:space-between;padding:20px 0;font-size:15px;color:var(--muted)}
+.top a{color:var(--muted);text-decoration:none} .top a:hover{color:var(--ink)}
+h1{font-size:clamp(44px,9vw,96px);font-weight:800;letter-spacing:-.04em;padding:16px 0 28px}
+h2{font-size:clamp(22px,2.6vw,28px);font-weight:700;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:40px;align-items:start;padding-bottom:64px}
+.card{border:1.5px solid var(--ink);border-radius:8px;padding:22px;background:var(--card)}
+/* avatar */
+.av{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.frame{position:relative;width:132px;height:132px;border-radius:50%;flex:none;overflow:hidden;background:var(--line);display:grid;place-items:center;
+  box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--aura),0 0 32px var(--aura);transition:box-shadow .6s}
+.frame img{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.frame span{font:800 44px "Bricolage Grotesque",sans-serif;color:var(--aura)}
+.frame::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.28),transparent 45%,rgba(255,255,255,.08));pointer-events:none}
+.frame.live{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--aura),0 0 56px var(--aura)}}
+.av h2{margin:0}
+.status{color:var(--muted);font-size:14px;margin:4px 0 0}
+.setup{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+input[type=text],input[type=date]{background:var(--paper);color:var(--ink);border:1.5px solid var(--line);border-radius:6px;padding:9px 12px;font:inherit;min-width:0}
+input:focus,textarea:focus{border-color:var(--accent);outline:none}
+textarea{width:100%;min-height:120px;resize:vertical;background:var(--paper);color:var(--ink);border:1.5px solid var(--line);border-radius:6px;padding:12px;font:inherit}
+.btn{font:600 15px "Instrument Sans",sans-serif;padding:9px 16px;border-radius:6px;border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.log{display:flex;flex-direction:column;gap:10px;height:340px;overflow-y:auto;margin:18px 0 12px;padding:2px}
+.msg{padding:10px 14px;border-radius:8px;max-width:90%;white-space:pre-wrap}
+.msg.you{align-self:flex-end;background:var(--accent);color:var(--accent-ink)}
+.msg.twin{align-self:flex-start;background:var(--paper);border:1px solid var(--line)}
+.ask{display:flex;gap:8px}.ask input{flex:1}
+.opt{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--muted);font-size:14px}
+.note{color:var(--muted);font-size:14px;margin:8px 0 0}
+.err{color:var(--warn);font-size:14px;margin:8px 0 0}
+/* tabs */
+.tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1.5px solid var(--ink)}
+.tabs button{font:600 15px "Instrument Sans",sans-serif;background:none;border:none;color:var(--muted);padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1.5px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.sp{flex:1}
+.chip{font:500 14px "Instrument Sans",sans-serif;padding:6px 12px;border-radius:99px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.files{display:flex;gap:8px;flex-wrap:wrap}
+.pend{font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:4px;color:var(--muted)}
+.entry{padding:16px 0;border-top:1px solid var(--line)}
+.meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:14px}
+.entry p{margin:6px 0 0;white-space:pre-wrap}
+.link{background:none;border:none;color:var(--muted);cursor:pointer;font:inherit;font-size:14px;padding:0}
+.link:hover{color:var(--warn)}
+.media{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.media img,.media video{max-width:100%;max-height:220px;border-radius:6px;border:1px solid var(--line)}
+.media audio{width:100%}
+.empty{color:var(--muted);padding:14px 0;border-top:1px solid var(--line)}
+.rem{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.rem b{display:block;font-weight:600}.rem small{color:var(--muted)}
+.when{font-weight:600;color:var(--accent);white-space:nowrap}
+.when.now{color:var(--warn)}
+.summary{font-family:"Bricolage Grotesque",sans-serif;font-size:21px;line-height:1.4;font-weight:500;margin:0 0 18px}
+.trait{margin:0 0 14px}.trait .h{display:flex;justify-content:space-between;font-weight:600}
+.bar{height:8px;background:var(--line);border-radius:4px;margin:6px 0;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+.trait small{color:var(--muted);font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 16px;padding:0;list-style:none}
+.tags li{font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:4px;color:var(--muted)}
+footer{border-top:1.5px solid var(--ink);padding:20px 0 32px;font-size:14px;color:var(--muted)}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.frame.live{animation:none}.frame{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span>A project by Yashaswi Jakkoju</span><a href="https://claude.ai/artifact/9421o62GaAyQ9foKqHpcrc">Back to portfolio</a></div>
+  <h1>Mirror Mind</h1>
+  <main class="grid">
+    <aside class="card" aria-label="Your mirror avatar">
+      <div class="av">
+        <div class="frame" id="frame"><span id="ini">?</span></div>
+        <div>
+          <h2 id="nm">Your mirror</h2>
+          <p class="status" id="st">Add your name and a photo to wake your mirror.</p>
+        </div>
+      </div>
+      <div class="setup">
+        <input type="text" id="nameIn" aria-label="Your name" placeholder="Your name" maxlength="40">
+        <button class="btn ghost" id="nameSave">Save name</button>
+        <button class="btn ghost" id="photoBtn">Choose mirror photo</button>
+        <input type="file" id="photoIn" accept="image/*" hidden>
+      </div>
+      <div class="log" id="log" aria-live="polite"></div>
+      <div class="ask"><input type="text" id="q" aria-label="Message to your mirror" placeholder="Ask about a memory, a date, or what’s next"><button class="btn" id="send">Send</button></div>
+      <label class="opt"><input type="checkbox" id="speak"> Speak replies aloud</label>
+      <p class="err" id="terr" role="alert" hidden></p>
+      <p class="note">Only text, dates and file names go to Claude. Your photos, videos and audio never leave this browser.</p>
+    </aside>
+
+    <section aria-label="Your data">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-t="j">Journal</button>
+        <button role="tab" aria-selected="false" data-t="d">Dates &amp; reminders</button>
+        <button role="tab" aria-selected="false" data-t="p">Profile</button>
+      </div>
+
+      <div id="tab-j">
+        <label for="text" class="note" style="margin:0 0 8px;display:block">What’s on your mind, or what do you want to remember?</label>
+        <textarea id="text" placeholder="Write freely. Add photos, video or audio below."></textarea>
+        <div class="row">
+          <div class="files">
+            <button class="btn ghost" data-pick="image/*">Add photo</button>
+            <button class="btn ghost" data-pick="video/*">Add video</button>
+            <button class="btn ghost" data-pick="audio/*">Add audio</button>
+          </div>
+          <input type="file" id="fileIn" multiple hidden>
+        </div>
+        <div class="row" id="pend"></div>
+        <div class="row">
+          <div class="files" id="moods" role="group" aria-label="Mood">
+            <button class="chip" aria-pressed="false">Calm</button><button class="chip" aria-pressed="false">Happy</button><button class="chip" aria-pressed="false">Anxious</button><button class="chip" aria-pressed="false">Tired</button><button class="chip" aria-pressed="false">Driven</button>
+          </div>
+          <span class="sp"></span><button class="btn" id="save">Save entry</button>
+        </div>
+        <p class="err" id="jerr" role="alert" hidden></p>
+        <div id="entries" style="margin-top:22px"></div>
+      </div>
+
+      <div id="tab-d" hidden>
+        <div class="row" style="margin-top:0">
+          <input type="text" id="rt" aria-label="Reminder title" placeholder="Birthday, exam, anniversary…" style="flex:1">
+          <input type="date" id="rd" aria-label="Date">
+        </div>
+        <div class="row"><label class="opt" style="margin:0"><input type="checkbox" id="rr"> Repeats every year</label><span class="sp"></span>
+          <button class="btn" id="radd">Add date</button><button class="btn ghost" id="rfind">Find dates in my journal</button></div>
+        <p class="err" id="derr" role="alert" hidden></p>
+        <div id="sugg"></div><div id="rems" style="margin-top:14px"></div>
+      </div>
+
+      <div id="tab-p" hidden>
+        <div id="profile"><p class="empty">Save a few entries, then update your mirror to build your personality profile. Three or more give a clearer reading.</p></div>
+        <div class="row" style="margin-top:0"><button class="btn" id="analyze">Update my mirror</button><button class="btn ghost" id="export">Save my replica data</button></div>
+        <p class="err" id="aerr" role="alert" hidden></p>
+        <p class="note">Your replica grows with every entry, photo, date and chat. It is stored privately in this browser. The saved file contains your text, dates and profile.</p>
+      </div>
+    </section>
+  </main>
+</div>
+<footer><div class="wrap">Mirror Mind · concept project · © 2026 Yashaswi Jakkoju</div></footer>
+
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var S={name:'',entries:[],profile:null,rems:[]},mood='',pending=[],history=[],pickType='image/*';
+  var COL={Calm:'#4FD1C5',Happy:'#F2C94C',Anxious:'#F2A65A',Tired:'#6C8CFF',Driven:'#E86FB0'};
+  var mem={};
+  /* storage: IndexedDB with in-memory fallback */
+  var dbp=new Promise(function(res){try{var r=indexedDB.open('mirrormind',1);r.onupgradeneeded=function(){r.result.createObjectStore('kv')};r.onsuccess=function(){res(r.result)};r.onerror=function(){res(null)}}catch(e){res(null)}});
+  function kv(mode,key,val){return dbp.then(function(db){
+    if(!db){if(mode==='get')return mem[key];if(mode==='set')mem[key]=val;else delete mem[key];return}
+    return new Promise(function(res){try{var tx=db.transaction('kv',mode==='get'?'readonly':'readwrite'),st=tx.objectStore('kv');
+      var rq=mode==='get'?st.get(key):mode==='set'?st.put(val,key):st.delete(key);rq.onsuccess=function(){res(rq.result)};rq.onerror=function(){res()}}catch(e){res()}})})}
+  function persist(){return kv('set','state',{name:S.name,entries:S.entries,profile:S.profile,rems:S.rems})}
+  function err(id,m){var e=$(id);e.textContent=m||'';e.hidden=!m}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function today(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+  function parse(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+  function days(r){var t=today(),d=parse(r.date);if(r.repeat){d.setFullYear(t.getFullYear());if(d<t)d.setFullYear(t.getFullYear()+1)}return Math.round((d-t)/864e5)}
+  function whenTxt(n){return n<0?Math.abs(n)+' days ago':n===0?'Today':n===1?'Tomorrow':'In '+n+' days'}
+
+  /* avatar */
+  function renderAvatar(){
+    $('nm').textContent=S.name?S.name+'’s mirror':'Your mirror';
+    $('ini').textContent=(S.name||'?').trim().charAt(0).toUpperCase();
+    $('nameIn').value=S.name;
+    var last=S.entries.length&&S.entries[S.entries.length-1].mood;
+    document.documentElement.style.setProperty('--aura',COL[last]||'#4FD1C5');
+    $('st').textContent=S.entries.length?S.entries.length+' memories stored'+(last?' · feeling '+last.toLowerCase():''):'Add your name and a photo to wake your mirror.';
+  }
+  async function loadPhoto(){
+    var b=await kv('get','avatar');if(!b)return;
+    var old=$('frame').querySelector('img');if(old)old.remove();
+    var i=document.createElement('img');i.alt='Your mirror photo';i.src=URL.createObjectURL(b);$('frame').insertBefore(i,$('ini'));$('ini').style.display='none';
+  }
+  function briefing(){
+    var u=S.rems.map(function(r){return{r:r,n:days(r)}}).filter(function(x){return x.n>=0&&x.n<=14}).sort(function(a,b){return a.n-b.n});
+    var g='Hi'+(S.name?' '+S.name:'')+'. ';
+    if(!u.length)return g+'Nothing is due in the next two weeks. Add dates in the Dates tab and I’ll keep track.';
+    return g+'Coming up: '+u.slice(0,4).map(function(x){return x.r.title+' ('+whenTxt(x.n).toLowerCase()+')'}).join(', ')+'.';
+  }
+
+  /* journal */
+  function fmtKind(t){return t.indexOf('image')===0?'photo':t.indexOf('video')===0?'video':'audio'}
+  function renderPending(){
+    var b=$('pend');b.textContent='';b.style.display=pending.length?'flex':'none';
+    pending.forEach(function(f,i){var s=el('button','pend',fmtKind(f.type)+': '+f.name+' ✕');s.className='pend link';s.setAttribute('aria-label','Remove '+f.name);s.onclick=function(){pending.splice(i,1);renderPending()};b.appendChild(s)});
+  }
+  async function renderEntries(){
+    var box=$('entries');box.textContent='';
+    if(!S.entries.length){box.appendChild(el('p','empty','No memories yet. Your first entry will appear here.'));return}
+    for(var k=S.entries.length-1;k>=0;k--){(function(e){
+      var d=el('div','entry'),m=el('div','meta');
+      m.appendChild(el('span','',new Date(e.t).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})+(e.mood?' · '+e.mood:'')));
+      var x=el('button','link','Delete');x.setAttribute('aria-label','Delete entry');
+      x.onclick=function(){e.media.forEach(function(a){kv('del','m:'+a.id)});S.entries=S.entries.filter(function(z){return z.id!==e.id});persist();renderEntries();renderAvatar()};
+      m.appendChild(x);d.appendChild(m);
+      if(e.text)d.appendChild(el('p','',e.text));
+      if(e.media.length){var md=el('div','media');d.appendChild(md);
+        e.media.forEach(function(a){kv('get','m:'+a.id).then(function(b){if(!b)return;var u=URL.createObjectURL(b),n;
+          if(a.kind==='photo'){n=document.createElement('img');n.alt=a.name}else{n=document.createElement(a.kind==='video'?'video':'audio');n.controls=true}
+          n.src=u;md.appendChild(n)})})}
+      box.appendChild(d)})(S.entries[k])}
+  }
+  $('save').onclick=async function(){
+    var v=$('text').value.trim();err('jerr','');
+    if(!v&&!pending.length){$('text').focus();return}
+    var media=[];
+    for(var i=0;i<pending.length;i++){var f=pending[i],id=uid();await kv('set','m:'+id,f);media.push({id:id,kind:fmtKind(f.type),name:f.name})}
+    S.entries.push({id:uid(),t:Date.now(),text:v,mood:mood,media:media});
+    await persist();$('text').value='';pending=[];renderPending();renderEntries();renderAvatar();
+  };
+  document.querySelectorAll('[data-pick]').forEach(function(b){b.onclick=function(){$('fileIn').accept=b.dataset.pick;$('fileIn').click()}});
+  $('fileIn').onchange=function(){Array.prototype.forEach.call(this.files,function(f){if(f.size>150*1048576){err('jerr',f.name+' is over 150 MB.');return}pending.push(f)});this.value='';renderPending()};
+  document.querySelectorAll('#moods .chip').forEach(function(c){c.onclick=function(){var on=c.getAttribute('aria-pressed')==='true';
+    document.querySelectorAll('#moods .chip').forEach(function(o){o.setAttribute('aria-pressed','false')});mood=on?'':c.textContent;if(!on)c.setAttribute('aria-pressed','true')}});
+
+  /* identity */
+  $('nameSave').onclick=function(){S.name=$('nameIn').value.trim();persist();renderAvatar()};
+  $('photoBtn').onclick=function(){$('photoIn').click()};
+  $('photoIn').onchange=async function(){var f=this.files[0];if(!f)return;await kv('set','avatar',f);loadPhoto()};
+
+  /* dates */
+  function renderRems(){
+    var b=$('rems');b.textContent='';
+    if(!S.rems.length){b.appendChild(el('p','empty','No dates yet. Add birthdays, deadlines or anniversaries.'));return}
+    S.rems.map(function(r){return{r:r,n:days(r)}}).sort(function(a,b){return a.n-b.n}).forEach(function(x){
+      var row=el('div','rem'),t=el('div');t.appendChild(el('b','',x.r.title));t.appendChild(el('small','',parse(x.r.date).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'})+(x.r.repeat?' · every year':'')));
+      row.appendChild(t);row.appendChild(el('span','sp'));row.appendChild(el('span','when'+(x.n<=1&&x.n>=0?' now':''),whenTxt(x.n)));
+      var d=el('button','link','Remove');d.setAttribute('aria-label','Remove '+x.r.title);d.onclick=function(){S.rems=S.rems.filter(function(z){return z!==x.r});persist();renderRems()};
+      row.appendChild(d);b.appendChild(row)});
+  }
+  function addRem(title,date,repeat){if(!title||!/^\d{4}-\d{2}-\d{2}$/.test(date))return false;S.rems.push({title:title,date:date,repeat:!!repeat});persist();renderRems();return true}
+  $('radd').onclick=function(){err('derr','');if(addRem($('rt').value.trim(),$('rd').value,$('rr').checked)){$('rt').value='';$('rd').value='';$('rr').checked=false}else err('derr','Enter a title and a date.')};
+
+  /* AI */
+  function diary(){
+    var t='';S.entries.slice(-40).forEach(function(e){var a=e.media.length?' (attached: '+e.media.map(function(m){return m.kind+' '+m.name}).join(', ')+')':'';
+      t+='['+new Date(e.t).toDateString()+(e.mood?', mood: '+e.mood:'')+'] '+e.text+a+'\n\n'});return t.slice(-7000);
+  }
+  async function getSample(id){var s=null;try{s=await claude.use('sample')}catch(e){}if(!s)err(id,'AI features are available when this page is opened in claude.ai.');return s}
+  function explain(id,e){err(id,e&&e.code==='not_granted'?'Permission was declined, so Claude can’t read your entries.':e&&e.code==='rate_limited'?'Too many requests. Wait a moment and try again.':'Something went wrong. Try again in a moment.')}
+  $('analyze').onclick=async function(){
+    err('aerr','');if(!S.entries.length){err('aerr','Save at least one journal entry first.');return}
+    var s=await getSample('aerr');if(!s)return;var b=$('analyze');b.disabled=true;b.textContent='Reading your entries…';
+    try{S.profile=await s.json('You are building a gentle, honest personality model from a person’s private journal. Base everything only on what they wrote; do not invent facts and do not diagnose. Respond with JSON only: {"summary": string (2-3 sentences, second person), "traits": [5 items {"name": string, "score": number 0-100, "note": string (one sentence citing their entries)}], "themes": [up to 5 short strings], "values": [up to 4 short strings]}. Use these traits: Openness, Conscientiousness, Sociability, Emotional steadiness, Optimism.\n\nJOURNAL:\n'+diary(),{cache:false});persist();renderProfile()}catch(e){explain('aerr',e)}
+    b.disabled=false;b.textContent='Update my mirror';
+  };
+  function renderProfile(){
+    var p=S.profile,box=$('profile');if(!p)return;box.textContent='';box.appendChild(el('p','summary',p.summary));
+    (p.traits||[]).forEach(function(t){var w=el('div','trait'),h=el('div','h');h.appendChild(el('span','',t.name));h.appendChild(el('span','',Math.round(t.score)));
+      var bar=el('div','bar'),i=document.createElement('i');i.style.width=Math.max(0,Math.min(100,t.score))+'%';bar.appendChild(i);
+      w.appendChild(h);w.appendChild(bar);w.appendChild(el('small','',t.note));box.appendChild(w)});
+    [['Themes',p.themes],['Values',p.values]].forEach(function(g){if(!g[1]||!g[1].length)return;box.appendChild(el('div','note',g[0]));
+      var u=el('ul','tags');g[1].forEach(function(x){u.appendChild(el('li','',x))});box.appendChild(u)});
+  }
+  $('rfind').onclick=async function(){
+    err('derr','');if(!S.entries.length){err('derr','Write a few journal entries first.');return}
+    var s=await getSample('derr');if(!s)return;var b=$('rfind');b.disabled=true;b.textContent='Searching…';
+    try{var r=await s.json('Find important dates mentioned in this journal (birthdays, anniversaries, deadlines, exams, appointments, events). Today is '+today().toDateString()+'. Respond with JSON only: {"items":[{"title":string,"date":"YYYY-MM-DD","repeat":boolean (true for birthdays and anniversaries)}]}. Only include dates clearly stated or strongly implied. Return {"items":[]} if none.\n\nJOURNAL:\n'+diary(),{cache:false});
+      var box=$('sugg');box.textContent='';var items=(r.items||[]).filter(function(i){return!S.rems.some(function(z){return z.title===i.title&&z.date===i.date})});
+      if(!items.length)box.appendChild(el('p','note','No new dates found in your journal.'));
+      items.forEach(function(i){var row=el('div','rem');var t=el('div');t.appendChild(el('b','',i.title));t.appendChild(el('small','','Suggested · '+i.date+(i.repeat?' · every year':'')));
+        row.appendChild(t);row.appendChild(el('span','sp'));var a=el('button','btn ghost','Add');a.onclick=function(){addRem(i.title,i.date,i.repeat);row.remove()};row.appendChild(a);box.appendChild(row)})}catch(e){explain('derr',e)}
+    b.disabled=false;b.textContent='Find dates in my journal';
+  };
+
+  /* chat */
+  function addMsg(w,t){var d=el('div','msg '+w,t);$('log').appendChild(d);$('log').scrollTop=1e9;return d}
+  function say(t){if($('speak').checked&&window.speechSynthesis){try{speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t))}catch(e){}}}
+  async function ask(){
+    var q=$('q').value.trim();if(!q)return;err('terr','');
+    if(!S.entries.length&&!S.rems.length){err('terr','Add a journal entry or a date first so your mirror has something to learn from.');return}
+    var s=await getSample('terr');if(!s)return;
+    $('q').value='';addMsg('you',q);history.push({role:'user',content:q});
+    var rem=S.rems.map(function(r){return r.title+' – '+r.date+(r.repeat?' (yearly)':'')+', '+whenTxt(days(r)).toLowerCase()}).join('; ');
+    var ctx='You are '+(S.name||'the user')+'’s mirror: an AI replica built only from their private journal and dates below, acting as their personal assistant. Speak in first person in their voice. Help them remember memories, keep track of important dates, and plan next steps. Keep replies under 120 words. Stay grounded in the data; if it does not say, admit you are not sure. Today is '+today().toDateString()+'. You are an AI model, not the real person; say so if asked. If they seem in distress, respond with care and encourage them to reach out to someone they trust.\n\nPROFILE: '+(S.profile?JSON.stringify(S.profile):'none yet')+'\n\nDATES: '+(rem||'none')+'\n\nJOURNAL:\n'+diary()+'\n\nConversation starts now. The user says:\n';
+    var msgs=history.map(function(m,i){return i===0?{role:'user',content:ctx+m.content}:m});
+    var d=addMsg('twin','Thinking…');$('frame').classList.add('live');$('send').disabled=true;
+    try{var r=await s(msgs,{cache:false,onText:function(x){d.textContent=x.text}});d.textContent=r.text;history.push({role:'assistant',content:r.text});say(r.text)}
+    catch(e){d.remove();history.pop();explain('terr',e)}
+    $('frame').classList.remove('live');$('send').disabled=false;
+  }
+  $('send').onclick=ask;$('q').addEventListener('keydown',function(e){if(e.key==='Enter')ask()});
+
+  /* export */
+  $('export').onclick=async function(){
+    err('aerr','');var d=null;try{d=await claude.use('downloads')}catch(e){}
+    if(!d){err('aerr','Saving files is available when this page is opened in claude.ai.');return}
+    var data={name:S.name,profile:S.profile,dates:S.rems,memories:S.entries.map(function(e){return{date:new Date(e.t).toISOString(),mood:e.mood,text:e.text,attachments:e.media.map(function(m){return m.kind+': '+m.name})}})};
+    try{await d.save({filename:'mirror-replica.json',data:JSON.stringify(data,null,2)})}catch(e){}
+  };
+
+  /* tabs */
+  document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function(){
+    document.querySelectorAll('.tabs button').forEach(function(o){o.setAttribute('aria-selected',o===b)});
+    ['j','d','p'].forEach(function(t){$('tab-'+t).hidden=t!==b.dataset.t})}});
+
+  kv('get','state').then(function(s){
+    if(s){S.name=s.name||'';S.entries=s.entries||[];S.profile=s.profile||null;S.rems=s.rems||[]}
+    renderAvatar();renderEntries();renderRems();renderProfile();renderPending();loadPhoto();addMsg('twin',briefing());
+  });
+})();
+</script>
+</body>
+</html>
